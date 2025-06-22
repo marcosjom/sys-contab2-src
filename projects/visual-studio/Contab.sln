@@ -1,0 +1,40 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33414.496
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contab", "Contab\Contab.csproj", "{1699793D-1488-47BE-B3E7-DF981E28AE30}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contab-installer", "Contab-installer\Contab-installer.csproj", "{E7B38478-AE8B-41A2-9B64-9356229E3C31}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1699793D-1488-47BE-B3E7-DF981E28AE30}.Debug|x64.ActiveCfg = Debug|x64
+		{1699793D-1488-47BE-B3E7-DF981E28AE30}.Debug|x64.Build.0 = Debug|x64
+		{1699793D-1488-47BE-B3E7-DF981E28AE30}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1699793D-1488-47BE-B3E7-DF981E28AE30}.Debug|x86.Build.0 = Debug|Any CPU
+		{1699793D-1488-47BE-B3E7-DF981E28AE30}.Release|x64.ActiveCfg = Release|x64
+		{1699793D-1488-47BE-B3E7-DF981E28AE30}.Release|x64.Build.0 = Release|x64
+		{1699793D-1488-47BE-B3E7-DF981E28AE30}.Release|x86.ActiveCfg = Release|Any CPU
+		{1699793D-1488-47BE-B3E7-DF981E28AE30}.Release|x86.Build.0 = Release|Any CPU
+		{E7B38478-AE8B-41A2-9B64-9356229E3C31}.Debug|x64.ActiveCfg = Debug|x64
+		{E7B38478-AE8B-41A2-9B64-9356229E3C31}.Debug|x64.Build.0 = Debug|x64
+		{E7B38478-AE8B-41A2-9B64-9356229E3C31}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E7B38478-AE8B-41A2-9B64-9356229E3C31}.Debug|x86.Build.0 = Debug|Any CPU
+		{E7B38478-AE8B-41A2-9B64-9356229E3C31}.Release|x64.ActiveCfg = Release|x64
+		{E7B38478-AE8B-41A2-9B64-9356229E3C31}.Release|x64.Build.0 = Release|x64
+		{E7B38478-AE8B-41A2-9B64-9356229E3C31}.Release|x86.ActiveCfg = Release|Any CPU
+		{E7B38478-AE8B-41A2-9B64-9356229E3C31}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F148CAA6-4B0B-4DE6-9380-CEBC2FEC7354}
+	EndGlobalSection
+EndGlobal

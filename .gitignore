@@ -1,0 +1,17 @@
+
+.DS_Store
+*.suo
+*.dll
+*.db
+*.user
+
+.vs
+
+bin
+obj
+tmp
+
+src-head.json
+src-pkg.zip
+
+

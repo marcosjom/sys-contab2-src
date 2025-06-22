@@ -1,0 +1,541 @@
+-- ----------------------------------------------------------
+-- MDB Tools - A library for reading MS Access database files
+-- Copyright (C) 2000-2011 Brian Bruns and others.
+-- Files in libmdb are licensed under LGPL and the utilities under
+-- the GPL, see COPYING.LIB and COPYING files respectively.
+-- Check out http://mdbtools.sourceforge.net
+-- ----------------------------------------------------------
+
+-- That file uses encoding UTF-8
+
+use contab_test;
+
+-- TABLE
+
+CREATE TABLE `Activos`
+ (
+	`idActivo`			int NOT NULL AUTO_INCREMENT, 
+	`descripcionActivo`		varchar (510) NOT NULL, 
+	`fechaCompraActivo`		datetime NOT NULL, 
+	`costoActivo`			bigint NOT NULL, 
+	`valorDesechoActivo`		bigint NOT NULL, 
+	`mesesVidaUtil`			smallint NOT NULL
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+        , PRIMARY KEY (`idActivo`)
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `ActivosOnUpdate` BEFORE UPDATE ON `Activos`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `AmortizacionesTipos`
+ (
+	`idAmortizacionTipo`		varchar (6) NOT NULL, 
+	`nombreAmortizacionTipo`	varchar (50) NOT NULL
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idAmortizacionTipo`)
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `AmortizacionesTiposOnUpdate` BEFORE UPDATE ON `AmortizacionesTipos`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `Amortizaciones`
+ (
+	`idAmortizacion`		int NOT NULL AUTO_INCREMENT, 
+	`idAmortizacionTipo`		varchar (6) NOT NULL, 
+	`nombreAmortizacion`		varchar (200) NOT NULL, 
+	`anoInicioAmortizacion`		smallint NOT NULL, 
+	`mesInicioAmortizacion`		tinyint NOT NULL, 
+	`mesesParaAmortizacionTotal`	tinyint NOT NULL, 
+	`montoTotalAmortizar`		bigint NOT NULL, 
+	`idCuentaDetalleDebe`		varchar (24) NOT NULL, 
+	`idCuentaDetalleHaber`		varchar (24) NOT NULL
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idAmortizacion`)
+	, INDEX `idAmortizacionTipo` (`idAmortizacionTipo`)
+	, INDEX `idCuentaDetalle` (`idCuentaDetalleDebe`)
+	, INDEX `idCuentaDetalleHaber` (`idCuentaDetalleHaber`)
+
+	, FOREIGN KEY(`idAmortizacionTipo`) REFERENCES `AmortizacionesTipos` (`idAmortizacionTipo`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `AmortizacionesOnUpdate` BEFORE UPDATE ON `Amortizaciones`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `AmortizacionesDetalles`
+ (
+	`idAmortizacionDetalle`		int NOT NULL AUTO_INCREMENT, 
+	`idAmortizacion`		int NOT NULL, 
+	`anoAmortizacion`		smallint NOT NULL, 
+	`mesAmortizacion`		tinyint NOT NULL, 
+	`montoAmortizado`		bigint NOT NULL, 
+	`idMovimientoDebe`		int NOT NULL, 
+	`idMovimientoHaber`		int NOT NULL
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idAmortizacionDetalle`)
+	, UNIQUE INDEX (`idAmortizacion`, `anoAmortizacion`, `mesAmortizacion`)
+	, INDEX `idMovimientoDebe` (`idMovimientoDebe`)
+	, INDEX `idMovimientoHaber` (`idMovimientoHaber`)
+
+	, FOREIGN KEY(`idAmortizacion`) REFERENCES `Amortizaciones` (`idAmortizacion`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `AmortizacionesDetallesOnUpdate` BEFORE UPDATE ON `AmortizacionesDetalles`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `CuentasGrupos`
+ (
+	`idCuentaGrupo`			varchar (30) NOT NULL, 
+	`nombreCuentaGrupo`		varchar (510) NOT NULL, 
+	`ordenGrupo`			tinyint NOT NULL,
+
+	`balanceDebe`			bigint NOT NULL DEFAULT 0, 
+	`balanceHaber`		      bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloUS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloUS`		bigint NOT NULL DEFAULT 0
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idCuentaGrupo`)
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `CuentasGruposOnUpdate` BEFORE UPDATE ON `CuentasGrupos`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `Cuentas`
+ (
+	`idCuenta`				varchar (4) NOT NULL, 
+	`numCuenta`				int NOT NULL,
+	`nombreCuenta`			varchar (510) NOT NULL, 
+	`idCuentaGrupo`			varchar (30) NOT NULL,
+
+	`balanceDebe`			bigint NOT NULL DEFAULT 0, 
+	`balanceHaber`		      bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloUS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloUS`		bigint NOT NULL DEFAULT 0
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`numCuenta`)
+	, UNIQUE INDEX `idCuenta` (`idCuenta`)
+	, INDEX `idCuentaGrupo` (`idCuentaGrupo`)
+
+	, FOREIGN KEY(`idCuentaGrupo`) REFERENCES `CuentasGrupos` (`idCuentaGrupo`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `CuentasOnUpdate` BEFORE UPDATE ON `Cuentas`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `CuentasSub`
+ (
+	`idCuentaSub`			varchar (8) NOT NULL, 
+	`idCuenta`				varchar (4) NOT NULL, 
+	`numCuentaSub`			int NOT NULL, 
+	`nombreCuentaSub`			varchar (510) NOT NULL,
+
+	`balanceDebe`			bigint NOT NULL DEFAULT 0, 
+	`balanceHaber`		      bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloUS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloUS`		bigint NOT NULL DEFAULT 0
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idCuenta`, `numCuentaSub`)
+	, UNIQUE INDEX `idCuentaSub` (`idCuentaSub`)
+	, INDEX `idCuenta` (`idCuenta`)
+	, INDEX `numCuentaSub` (`numCuentaSub`)
+
+	, FOREIGN KEY(`idCuenta`) REFERENCES `Cuentas` (`idCuenta`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `CuentasSubOnUpdate` BEFORE UPDATE ON `CuentasSub`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `CuentasSubSub`
+ (
+	`idCuentaSubSub`			varchar (12) NOT NULL, 
+	`idCuentaSub`			varchar (8) NOT NULL, 
+	`numCuentaSubSub`			int NOT NULL, 
+	`nombreCuentaSubSub`		varchar (510) NOT NULL,
+
+	`balanceDebe`			bigint NOT NULL DEFAULT 0, 
+	`balanceHaber`		      bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloUS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloUS`		bigint NOT NULL DEFAULT 0
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idCuentaSub`, `numCuentaSubSub`)
+	, UNIQUE INDEX `idCuentaSubSub` (`idCuentaSubSub`)
+	, INDEX `idCuentaSub` (`idCuentaSub`)
+	, INDEX `numCuentaSubSub` (`numCuentaSubSub`)
+
+	, FOREIGN KEY(`idCuentaSub`) REFERENCES `CuentasSub` (`idCuentaSub`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `CuentasSubSubOnUpdate` BEFORE UPDATE ON `CuentasSubSub`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `CuentasSubSubSub`
+ (
+	`idCuentaSubSubSub`		varchar (16) NOT NULL, 
+	`idCuentaSubSub`		varchar (12) NOT NULL, 
+	`numCuentaSubSubSub`		int NOT NULL, 
+	`nombreCuentaSubSubSub`		varchar (510) NOT NULL,
+
+	`balanceDebe`			bigint NOT NULL DEFAULT 0, 
+	`balanceHaber`		      bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloUS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloUS`		bigint NOT NULL DEFAULT 0
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idCuentaSubSub`, `numCuentaSubSubSub`)
+	, UNIQUE INDEX `idCuentaSubSubSub` (`idCuentaSubSubSub`)
+	, INDEX `idCuentaSubSub` (`idCuentaSubSub`)
+	, INDEX `numCuentaSubSubSub` (`numCuentaSubSubSub`)
+
+	, FOREIGN KEY(`idCuentaSubSub`) REFERENCES `CuentasSubSub` (`idCuentaSubSub`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `CuentasSubSubSubOnUpdate` BEFORE UPDATE ON `CuentasSubSubSub`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `CuentasDetalle`
+ (
+	`idCuentaDetalle`			varchar (24) NOT NULL, 
+	`idCuentaSubSubSub`		varchar (16) NOT NULL, 
+	`numCuentaDetalle`		int NOT NULL, 
+	`nombreCuentaDetalle`		varchar (510) NOT NULL, 
+
+	`balanceDebe`			bigint NOT NULL DEFAULT 0, 
+	`balanceHaber`		      bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloUS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloUS`		bigint NOT NULL DEFAULT 0
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idCuentaSubSubSub`, `numCuentaDetalle`)
+	, UNIQUE INDEX `idCuentaDetalle` (`idCuentaDetalle`)
+	, INDEX `idCuentaSubSubSub` (`idCuentaSubSubSub`)
+	, INDEX `numCuentaDetalle` (`numCuentaDetalle`)
+
+	, FOREIGN KEY(`idCuentaSubSubSub`) REFERENCES `CuentasSubSubSub` (`idCuentaSubSubSub`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `CuentasDetalleOnUpdate` BEFORE UPDATE ON `CuentasDetalle`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `Empleados`
+ (
+	`idEmpleado`			int NOT NULL AUTO_INCREMENT,
+	`nombres`			varchar (200) NOT NULL, 
+	`apellidos`			varchar (200) NOT NULL, 
+	`salarioMensual`		bigint NOT NULL, 
+	`idCuentaDetalleSueldo`		varchar (24) NOT NULL, 
+	`idCuentaDetalleVacaciones`	varchar (24) NOT NULL, 
+	`idCuentaDetalleAguinaldo`	varchar (24) NOT NULL, 
+	`idCuentaDetalleIndemnizacion`	varchar (24) NOT NULL
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idEmpleado`)
+	, UNIQUE INDEX `idCuentaDetalleAguinaldo` (`idCuentaDetalleVacaciones`)
+	, UNIQUE INDEX `idCuentaDetalleIndemnizacion` (`idCuentaDetalleIndemnizacion`)
+	, UNIQUE INDEX `idCuentaDetalleSueldo` (`idCuentaDetalleSueldo`)
+	, UNIQUE INDEX `idCuentaDetalleVacaciones` (`idCuentaDetalleAguinaldo`)
+	, INDEX `Nombres` (`nombres`)
+	, INDEX `Apellidos` (`apellidos`)
+	, INDEX `salarioMensual` (`salarioMensual`)
+
+	, FOREIGN KEY(`idCuentaDetalleSueldo`) REFERENCES `CuentasDetalle` (`idCuentaDetalle`)
+	, FOREIGN KEY(`idCuentaDetalleVacaciones`) REFERENCES `CuentasDetalle` (`idCuentaDetalle`)
+	, FOREIGN KEY(`idCuentaDetalleAguinaldo`) REFERENCES `CuentasDetalle` (`idCuentaDetalle`)
+	, FOREIGN KEY(`idCuentaDetalleIndemnizacion`) REFERENCES `CuentasDetalle` (`idCuentaDetalle`)
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `EmpleadosOnUpdate` BEFORE UPDATE ON `Empleados`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `ComprobantesDeDiario`
+ (
+	`idComprobanteDiario`		varchar (30) NOT NULL, 
+	`fechaComprobanteDiario`	datetime NOT NULL, 
+	`anoComprobanteDiario`		int NOT NULL, 
+	`mesComprobanteDiario`		tinyint NOT NULL, 
+	`numeroComprobante`		int NOT NULL,
+
+	`balanceDebe`			bigint NOT NULL DEFAULT 0, 
+	`balanceHaber`		      bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloCS`		bigint NOT NULL DEFAULT 0, 
+	`balanceDebeSoloUS`		bigint NOT NULL DEFAULT 0, 
+	`balanceHaberSoloUS`		bigint NOT NULL DEFAULT 0
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`anoComprobanteDiario`, `mesComprobanteDiario`, `numeroComprobante`)
+	, UNIQUE INDEX `idComprobanteDiario` (`idComprobanteDiario`)
+	, INDEX `fechaComprobanteDiario` (`fechaComprobanteDiario`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `ComprobantesDeDiarioOnUpdate` BEFORE UPDATE ON `ComprobantesDeDiario`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+-- TABLE
+
+CREATE TABLE `Movimientos`
+ (
+	`idMovimiento`			int NOT NULL AUTO_INCREMENT, 
+	`idComprobanteDiario`		varchar (30) NOT NULL, 
+	`idCuentaDetalle`			varchar (24) NOT NULL, 
+	`montoDebeCS`			bigint NULL, 
+	`montoHaberCS`			bigint NULL, 
+	`esDolares`				boolean NOT NULL DEFAULT 0, 
+	`tasaCambio`			bigint NULL, 
+	`montoDebeUS`			bigint NULL, 
+	`montoHaberUS`			bigint NULL, 
+	`referencia`			varchar (510) NOT NULL
+
+	, `createUser`			varchar(64) NOT NULL DEFAULT USER()
+	, `createDate`			datetime NOT NULL DEFAULT NOW()
+	, `updateUser`			varchar(64) NULL
+	, `updateDate`			datetime NULL
+	, `updateCount`			int NULL
+
+	, PRIMARY KEY (`idMovimiento`)
+	, INDEX `idComprobanteDiario` (`idComprobanteDiario`)
+	, INDEX `idCuentaDetalle` (`idCuentaDetalle`)
+
+	, FOREIGN KEY(`idComprobanteDiario`) REFERENCES `ComprobantesDeDiario` (`idComprobanteDiario`)
+	, FOREIGN KEY(`idCuentaDetalle`) REFERENCES `CuentasDetalle` (`idCuentaDetalle`)
+
+);
+
+-- CREATE TRIGGERS ...
+DELIMITER ;;
+CREATE TRIGGER `MovimientosOnUpdate` BEFORE UPDATE ON `Movimientos`
+FOR EACH ROW
+BEGIN
+   Set new.updateUser=USER();
+   Set new.updateDate=NOW();
+   set new.updateCount=(IFNULL(old.updateCount, 0) + 1);
+END;;
+DELIMITER ;
+
+
+
+
+
+-- RECORDS ...
+
+
+INSERT INTO `AmortizacionesTipos` (`idAmortizacionTipo`, `nombreAmortizacionTipo`) VALUES ("dep","Depreciacion"), ("gst","Gastos anticipados");
+
+INSERT INTO `CuentasGrupos` (`idCuentaGrupo`, `nombreCuentaGrupo`, `ordenGrupo`) VALUES ("ACTIVOS","ACTIVOS",1), ("CAPITAL","CAPITAL",2), ("PASIVOS","PASIVOS",3);
+
+INSERT INTO `Cuentas` (`idCuenta`, `numCuenta`, `nombreCuenta`, `idCuentaGrupo`) VALUES ("01",1,"ACTIVO","ACTIVOS"), ("02",2,"PASIVO","PASIVOS"), ("03",3,"CAPITAL","CAPITAL"), ("04",4,"INGRESOS","ACTIVOS"), ("05",5,"COSTOS","ACTIVOS"), ("06",6,"GASTOS","ACTIVOS"), ("07",7,"GASTOS NO DEDUCIBLES","ACTIVOS");
+
+INSERT INTO `CuentasSub` (`idCuentaSub`, `idCuenta`, `numCuentaSub`, `nombreCuentaSub`) VALUES ("0101","01",1,"ACTIVO CIRCULANTE"), ("0102","01",2,"ACTIVO NO CIRCULANTE"), ("0103","01",3,"OTROS ACTIVOS"), ("0201","02",1,"CIRCULANTE"), ("0202","02",2,"PASIVO A LARGO PLAZO"), ("0301","03",1,"CAPITAL SOCIAL"), ("0401","04",1,"INGRESOS"), ("0501","05",1,"COSTO DE VENTAS"), ("0502","05",2,"COSTOS DE FABRICACION"), ("0601","06",1,"GASTOS DE OPERACIONES"), ("0701","07",1,"GASTOS NO DEDUCIBLES");
+
+INSERT INTO `CuentasSubSub` (`idCuentaSubSub`, `idCuentaSub`, `numCuentaSubSub`, `nombreCuentaSubSub`) VALUES ("010101","0101",1,"EFECTIVO CAJA Y BANCO"), ("010102","0101",2,"CUENTAS Y DOCUMENTOS POR COBRAR"), ("010103","0101",3,"INVENTARIOS"), ("010104","0101",4,"IMPUESTOS Y RETENCIONES PAG. X ANTICIPADO"), ("010105","0101",5,"GASTOS PAGADOS X ANTICIPADO"), ("010201","0102",1,"ACTIVO FIJO"), ("010301","0103",1,"OTROS ACTIVOS"), ("020101","0201",1,"CUENTAS Y DOCUMENTOS POR PAGAR"), ("020102","0201",2,"IMPUESTOS Y RETENCIONES POR PAGAR"), ("020103","0201",3,"GASTOS ACUMULADOS POR PAGAR"), ("020104","0201",4,"PAGOS RECIBIDOS POR ADELANTADO"), ("020105","0201",5,"OTRAS CUENTAS POR PAGAR"), ("020201","0202",1,"PRESTAMOS POR PAGAR"), ("030101","0301",1,"CAPITAL SOCIAL AUTORIZADO"), ("030102","0301",2,"APORTE ADICIONAL"), ("030103","0301",3,"UTILIDAD O PERDIDA DEL EJERCICIO"), ("030104","0301",4,"UITLIDADES ACUMULADAS POR DISTRIBUIR"), ("040101","0401",1,"INGRESOS POR SERVICIOS"), ("040102","0401",2,"INGRESOS POR VENTAS"), ("040103","0401",3,"REBAJAS Y DEVOLUCIONES DE VENTAS"), ("040104","0401",4,"OTROS INGRESOS"), ("040105","0401",5,"INGRESOS EXPORTACION"), ("050101","0501",1,"COSTO DE VENTAS"), ("050201","0502",1,"PROYECTOS SOFTWARE"), ("060101","0601",1,"GASTOS DE ADMINISTRACION"), ("060102","0601",2,"GASTOS DE VENTAS"), ("060103","0601",3,"GASTOS FINANCIEROS"), ("060104","0601",4,"OTROS EGRESOS"), ("070101","0701",1,"GASTOS NO DEDUCIBLES");
+
+INSERT INTO `CuentasSubSubSub` (`idCuentaSubSubSub`, `idCuentaSubSub`, `numCuentaSubSubSub`, `nombreCuentaSubSubSub`) VALUES ("01010101","010101",1,"CAJA GENERAL"), ("01010102","010101",2,"CAJA CHICA"), ("01010103","010101",3,"BANCO MONEDA NACIONAL"), ("01010104","010101",4,"BANCO MONEDA EXTRANJERA"), ("01010201","010102",1,"CUENTAS POR COBRAR SOCIOS"), ("01010202","010102",2,"CUENTAS POR COBRAR CLIENTES"), ("01010203","010102",3,"PRESTAMOS A FUNCIONARIOS Y EMPLEADOS"), ("01010204","010102",4,"ANTICIPOS A JUSTIFICAR"), ("01010205","010102",5,"ANTICIPO A PROVEEDORES"), ("01010206","010102",6,"OTRAS CUENTAS POR COBRAR"), ("01010207","010102",7,"PROVISION P/CTA. INCOBRABLE"), ("01010301","010103",1,"INVENTARIOS"), ("01010302","010103",2,"MERCADERIA EN TRANSITO"), ("01010401","010104",1,"IMPUESTOS PAGADAS X ANTICIPADO"), ("01010402","010104",2,"RETENCIONES PAGADAS X ANTICIPADO"), ("01010501","010105",1,"GASTOS DE ORGANIZACIÓN"), ("01010502","010105",2,"GASTOS DE INSTALACION"), ("01010503","010105",3,"ADELANTOS POR SERVICIOS"), ("01020101","010201",1,"TERRENOS"), ("01020102","010201",2,"EDIFICIOS"), ("01020103","010201",3,"MOBILIARIOS Y EQUIPOS DE OFICINA"), ("01020104","010201",4,"EQUIPOS DE COMPUTO"), ("01020105","010201",5,"EQUIPO RODANTE"), ("01020106","010201",6,"MAQUINARIA"), ("01020107","010201",7,"OTROS ACTIVOS"), ("01020108","010201",8,"DEPRECIACION ACUMULADA"), ("01020109","010201",9,"CONSTRUCCIONES EN PROCESO"), ("01030101","010301",1,"DEPOSITOS EN GARANTIA"), ("01030102","010301",2,"GASTOS POR AMORTIZAR"), ("01030103","010301",3,"MEJORAS EN PROPIEDAD ARRENDADA"), ("02010101","020101",1,"PRESTAMOS POR PAGAR"), ("02010102","020101",2,"CUENTAS POR PAGAR PROVEEDORES"), ("02010103","020101",3,"TARJETAS DE CREDITO"), ("02010201","020102",1,"IMPUESTOS POR PAGAR"), ("02010202","020102",2,"RETENCIONES POR PAGAR"), ("02010301","020103",1,"DE EMPLEADOS"), ("02010302","020103",2,"DE SERVICIOS"), ("02010303","020103",3,"SUELDOS"), ("02010304","020103",4,"VACACIONES"), ("02010305","020103",5,"AGUINALDOS"), ("02010306","020103",6,"INDEMNIZACION"), ("02010401","020104",1,"CLIENTES"), ("02010501","020105",1,"OTRAS CUENTAS POR PAGAR"), ("02020101","020201",1,"PRESTAMOS POR PAGAR"), ("03010101","030101",1,"ACCIONES EN CIRCULACION"), ("03010102","030101",2,"RESERVA LEGAL"), ("03010103","030101",4,"UTILIDAD O PERDIDA ACUMULADA"), ("03010105","030101",5,"UTILIDAD O PERDIDA DEL EJERCICIO"), ("03010201","030102",1,"APORTE ADICIONAL NO SUSCRITO"), ("03010301","030103",1,"UTILIDAD O PERDIDA DEL EJERCICIO"), ("04010101","040101",1,"INGRESOS POR SERVICIOS"), ("04010201","040102",1,"INGRESOS POR VENTAS"), ("04010301","040103",1,"REBAJAS Y DEVOLUCIONES DE VENTAS"), ("04010401","040104",1,"OTROS INGRESOS"), ("04010501","040105",1,"INGRESOS EXPORTACION"), ("05010101","050101",1,"COSTO DE VENTAS"), ("05020101","050201",1,"SUELDOS Y PRESTACIONES SOCIALES"), ("05020102","050201",2,"GASTOS DE VIATICOS"), ("05020103","050201",3,"GASTOS DE INFRAESTRUCTURA"), ("05020104","050201",4,"GASTOS DE MANTENIMIENTO Y REPARACION"), ("05020105","050201",5,"GASTOS DE SUMINISTROS"), ("05020106","050201",6,"DEPRECIACION"), ("05020107","050201",7,"PROVISION Y AMORTIZACION"), ("05020108","050201",8,"OTROS GASTOS GENERALES"), ("05020109","050201",9,"HONORARIOS PROFESIONALES"), ("05020110","050201",10,"INSS PATRONAL"), ("06010101","060101",1,"SUELDOS Y PRESTACIONES SOCIALES"), ("06010102","060101",2,"GASTOS DE VIATICOS"), ("06010103","060101",3,"GASTOS DE INFRAESTRUCTURA"), ("06010104","060101",4,"GASTOS DE MANTENIMIENTO Y REPARACION"), ("06010105","060101",5,"GASTOS DE SUMINISTROS"), ("06010106","060101",6,"DEPRECIACION"), ("06010107","060101",7,"PROVISION Y AMORTIZACION"), ("06010108","060101",8,"OTROS GASTOS GENERALES"), ("06010109","060101",9,"HONORARIOS PROFESIONALES"), ("06010110","060101",10,"INSS PATRONAL"), ("06010201","060102",1,"SUELDOS Y PRESTACIONES SOCIALES"), ("06010202","060102",2,"GASTOS DE VIATICOS"), ("06010203","060102",3,"GASTOS DE INFRAESTRUCTURA"), ("06010204","060102",4,"GASTOS DE MANTENIMIENTO Y REPARACION"), ("06010205","060102",5,"GASTOS DE SUMINISTROS"), ("06010206","060102",6,"DEPRECIACION"), ("06010207","060102",7,"OTROS GASTOS GENERALES"), ("06010208","060102",8,"HONORARIOS PROFESIONALES"), ("06010209","060102",9,"INSS PATRONAL"), ("06010301","060103",1,"GASTOS FINANCIEROS"), ("06010401","060104",1,"OTROS EGRESOS"), ("07010101","070101",1,"GASTOS NO DEDUCIBLES"), ("02010307","020103",7,"VIATICOS"), ("02010308","020103",8,"HONORARIOS PROFESIONALES");
+
+INSERT INTO `CuentasDetalle` (`idCuentaDetalle`, `idCuentaSubSubSub`, `numCuentaDetalle`, `nombreCuentaDetalle`, `balanceDebeSoloCS`, `balanceHaberSoloCS`, `balanceDebeSoloUS`, `balanceHaberSoloUS`) VALUES ("010101010001","01010101",1,"Caja general C$",0,0,0,0), ("010101010002","01010101",2,"Caja general U$",0,0,0,0), ("010101020001","01010102",1,"Caja chica C$",1.50102152929321e-13,0,0,0), ("010101020002","01010102",2,"Caja chica U$",0,0,0,0), ("010102020001","01010202",1,"Facturas x cobrar",70.43000000000001,0,0,0), ("010102040001","01010204",1,"Anticipos a justificar",0,0,0,0), ("010102060001","01010206",1,"Ajustes a justificar",1352.23,0,630,0), ("010102070001","01010207",1,"Provision p/cuentas incobrables",0,0,0,0), ("010103010001","01010301",1,"Bodega principal",0,0,0,0), ("010103020001","01010302",1,"Mercaderia en transito",0,0,0,0), ("010104010001","01010401",1,"IVA credito fiscal",4547.54,0,110.71,0), ("010104010002","01010401",2,"Anticipo IR 1%",7628.41,0,0,0), ("010104020001","01010402",1,"Retencion de IR clientes",8780.219999999999,0,256,0), ("010104020002","01010402",2,"Impuesto municipal",0,0,0,0), ("010105010001","01010501",1,"Gastos de organización",0,0,0,0), ("010105020001","01010502",1,"Adelantos por compras y servicios",0,0,0,0), ("010201030001","01020103",1,"Mobiliarios y equipos de oficina",7680.33,0,0,0), ("010201030002","01020103",2,"Aires acondicionados",0,0,0,0), ("010201040001","01020104",1,"Equipos de computacion",64256.18,0,2958.98,0), ("010201050001","01020105",1,"Equipo rodante",0,0,0,0), ("010201060001","01020106",1,"Maquinaria",0,0,0,0), ("010201070001","01020107",1,"Licencias de software",0,0,0,0), ("010201080001","01020108",1,"Dep. acum. edifcios",0,0,0,0), ("010201080002","01020108",2,"Dep. acum. mobiliarios y equipos de oficina",0,4548.4,0,0), ("010201080003","01020108",3,"Dep. acum. equipos de computo",0,61489.35,0,0), ("010201080004","01020108",4,"Dep. acum. equipo rodante",0,0,0,0), ("010201080005","01020108",5,"Dep. acum. maquinaria",0,0,0,0), ("010301020001","01030102",1,"Gastos de organizacion e instalacion",28512.12,0,1024.79,0), ("010301020002","01030102",2,"Amortizacion de gastos instalacion",0,28512.12,0,0), ("010301030001","01030103",1,"Valor de adquisicion",0,0,0,0), ("020101010001","02010101",1,"Prestamos Corto plazo",4272.76,0,1256.42,0), ("020102010001","02010201",1,"IR annual",0,1280.8,0,0), ("020102020001","02010202",1,"IR empleados",0,7810.57,0,70), ("020102020002","02010202",2,"Retencion en la fuente",0,1072,0,375.82), ("020102020003","02010202",3,"INSS laboral",0,1200.78000000001,0,0), ("020102020004","02010202",4,"IVA debito fiscal",19889.35,0,0,2377.5), ("020102020005","02010202",5,"Retencion honorarios",27517.09,0,0,740.52), ("020103010001","02010301",1,"Sueldos",0,396502.15,0,0), ("020103010002","02010301",2,"Vacaciones",0,37587.8399999999,0,0), ("020103010003","02010301",3,"Aguinaldo",0,30248.77,0,0), ("020103010004","02010301",4,"Indemnizacion",0,37587.84,0,0), ("020103010005","02010301",5,"INSS patronal",654.72999999997,0,0,0), ("020103010006","02010301",6,"INATEC",0,2.70000000000002,0,0), ("020103010007","02010301",7,"Viaticos",0,0,0,0), ("020103020001","02010302",1,"Agua y alcantarillado",0,0,0,0), ("020103020002","02010302",2,"Energia electrica",0,0,0,0), ("020103020003","02010302",3,"Telefonia fija",0,0,0,0), ("020103020004","02010302",4,"Internet",0,0,0,0), ("020103020005","02010302",5,"Honorarios Profesionales",0,0,0,900), ("020104010001","02010401",1,"Adelantos de clientes",0.01,0,2600,0), ("020105010003","02010501",3,"Multas x Pagar",0,0,0,0), ("020105010005","02010501",5,"Alquiler de local",0,0,0,3000), ("040103010001","04010301",1,"Rebajas en ventas",0,0,0,0), ("040103010002","04010301",2,"Devoluciones de ventas",0,0,0,0), ("040104010001","04010401",1,"Utilidad en cambio",78.03,0,0,0), ("040104010002","04010401",2,"Otros ingresos",0,0,0,0), ("040104010003","04010401",3,"Bonificaciones tarjetas de credito",0,0,0,6.19), ("050101010001","05010101",1,"Costo de ventas",0,0,351.63,0), ("050201010001","05020101",1,"Sueldos",0,0,0,0), ("050201010002","05020101",2,"Horas extras",0,0,0,0), ("050201010003","05020101",3,"Vacaciones",8256,0,0,0), ("050201010004","05020101",4,"Aguinaldos",8256,0,0,0), ("050201010005","05020101",5,"Indemnizacion",8256,0,0,0), ("050201010006","05020101",6,"INSS patronal",0,3.63797880709171e-12,0,0), ("050201010007","05020101",7,"INATEC",0,4.54747350886464e-13,0,0), ("050201010008","05020101",8,"Capacitaciones y talleres",0,0,0,0), ("050201010009","05020101",9,"Gastos medicos",0,0,0,0), ("050201010010","05020101",10,"Bonificaciones",0,0,0,0), ("050201020001","05020102",1,"Alimentacion",0,0,0,0), ("050201020002","05020102",2,"Hospedaje",0,0,0,0), ("050201020003","05020102",3,"Transporte",0,0,0,0), ("050201020004","05020102",4,"Viaticos general",20602.19,0,900,0), ("050201030001","05020103",1,"Energia electrica",0,0,0,0), ("050201030002","05020103",2,"Agua potable",0,0,0,0), ("050201030003","05020103",3,"Telefono celular",3.63797880709171e-12,0,0,0), ("050201030004","05020103",4,"Telefono fijo",0,0,0,0), ("050201030005","05020103",5,"Internet",760.000000000002,0,0,0), ("050201030006","05020103",6,"Comunicacion y correo",0,0,0,0), ("050201030007","05020103",7,"Alquiler de local",0,0,0,0), ("050201030008","05020103",8,"Vigilancia y seguridad",0,0,0,0), ("050201030009","05020103",9,"Suscripciones e incripciones",0,0,170.83,0), ("050201040001","05020104",1,"Mto. y rep. edificio",0,0,0,0), ("050201040002","05020104",2,"Mto. y rep. mobiliario y equipo de oficina",0,0,0,0), ("050201040003","05020104",3,"Mto. y rep. mobiliario y equipo de computos",2121.63,0,1752.74,0), ("050201040004","05020104",4,"Mto. y rep.mobiliario y equipo rodante",0,0,0,0), ("050201050001","05020105",1,"Papeleria y utiles de oficina",0,0,0,0), ("050201050002","05020105",2,"Combustible y lubricantes",500,0,0,0), ("050201050003","05020105",3,"Encolochado, fotocopia e impresiones",0,0,0,0), ("050201060001","05020106",1,"Dep. edificios",0,0,0,0), ("050201060002","05020106",2,"Dep. mobiliarios y equipos de oficina",1536.12,0,0,0), ("050201060003","05020106",3,"Dep. equipos de computo",2246.58999999998,0,0,0), ("050201060004","05020106",4,"Dep. equipo rodante",0,0,0,0), ("050201060005","05020106",5,"Dep. maquinaria",0,0,0,0), ("050201070001","05020107",1,"Provision p/cuentas incobrables",0,0,0,0), ("050201070002","05020107",2,"Gastos de organizacion e instalacion",0,0,0,0), ("050201070003","05020107",3,"Mejoras en propiedad arrendada",0,0,0,0), ("050201080001","05020108",1,"Gastos de representacion",0,0,745.3200000000001,0), ("050201080002","05020108",2,"Municipales (matricula, impuesto, basura)",0,0,0,0), ("050201080003","05020108",3,"Medicinas",0,0,0,0), ("050201080004","05020108",4,"Obsequios y regalos",0,0,0,0), ("050201080005","05020108",5,"Alimentos y bebidas",0,0,0,0), ("050201080006","05020108",6,"Uniformes al personal",0,0,0,0), ("050201080007","05020108",7,"Entrada a estacionamientos",0,0,0,0), ("050201080008","05020108",8,"Seguros",0,0,0,0), ("050201080009","05020108",9,"Aseo y limpieza",0,0,0,0), ("050201080010","05020108",10,"Otros servicios contratados",0,0,0,0), ("050201080011","05020108",11,"Licencias de software",1782.039291,0,777.1799999999999,0), ("050201080012","05020108",12,"Hosting y suscripciones a servicios",15094.431348,0,2836.49,0), ("050201080013","05020108",13,"Marcas y otros distintivos",0,0,0,0), ("050201090001","05020109",1,"Honorarios profesionales",265740.28,0,8516.34,0), ("050201100001","05020110",1,"Inss patronal",0,0,0,0), ("060101010001","06010101",1,"Sueldos",1152392.66,0,0,0), ("060101010002","06010101",2,"Horas extras",0,0,0,0), ("060101010003","06010101",3,"Vacaciones",3500.03999999998,0,0,0), ("060101010004","06010101",4,"Aguinaldos",30833.46,0,0,0), ("060101010005","06010101",5,"Indemnizacion",3500.03999999999,0,0,0), ("060101010006","06010101",6,"INSS patronal",94400.89,0,0,0), ("060101010007","06010101",7,"INATEC",8186.7,0,0,0), ("060101010008","06010101",8,"Capacitaciones y talleres",0,0,0,0), ("060101010009","06010101",9,"Gastos medicos",0,0,0,0), ("060101010010","06010101",10,"Bonificaciones",0,0,0,0), ("060101020001","06010102",1,"Alimentacion",0,0,0,0), ("060101020002","06010102",2,"Hospedaje",0,0,0,0), ("060101020003","06010102",3,"Transporte",0,0,58,0), ("060101020004","06010102",4,"Viaticos general",19878,0,4700,0), ("060101030001","06010103",1,"Energia electrica",29712.15,0,0,0), ("060101030002","06010103",2,"Agua potable",4701,0,0,0), ("060101030003","06010103",3,"Telefono celular",100,0,0,0), ("060101030004","06010103",4,"Telefono fijo",0,0,0,0), ("060101030005","06010103",5,"Internet",13199.13,0,27.6,0), ("060101030006","06010103",6,"Comunicacion y correo",0,0,0,0), ("060101030007","06010103",7,"Alquiler de local",0,0,3000,0), ("060101030008","06010103",8,"Vigilancia y seguridad",0,0,0,0), ("060101030009","06010103",9,"Suscripciones e inscripciones",3247.16,0,209.81,0), ("060101040001","06010104",1,"Mto.y rep. edificio",0,0,0,0), ("060101040002","06010104",2,"Mto.y rep. mobiliario y equipo de oficina",0,0,0,0), ("060101040003","06010104",3,"Mto.y rep. mobiliario y equipo de computos",22118.05,0,364.81,0), ("060101040004","06010104",4,"Mto.y rep. mobiliario y equipo de rodantes",0,0,0,0), ("060101050001","06010105",1,"Papeleria y utiles de oficina",2618.52,0,0,0), ("060101050002","06010105",2,"Combustible y lubricantes",2200,0,0,0), ("060101050003","06010105",3,"Encolochado, fotocopia impresiones",0,0,12.06,0), ("060101060001","06010106",1,"Dep. edifcios",0,0,0,0), ("060101060002","06010106",2,"Dep. mobiliarios y equipos de oficina",0,0,0,0), ("060101060003","06010106",3,"Dep. equipos de computo",0,4.54747350886464e-13,0,0), ("060101060004","06010106",4,"Dep. equipo rodante",0,0,0,0), ("060101060005","06010106",5,"Dep. maquinaria",0,0,0,0), ("060101070001","06010107",1,"Provision p/cuentas incobrables",0,0,0,0), ("060101070002","06010107",2,"Gastos de organizacion e instalacion",1.09139364212751e-11,0,0,0), ("060101070003","06010107",3,"Mejoras en propiedad arrendada",0,0,0,0), ("060101080001","06010108",1,"Gastos de representacion",0,0,0,0), ("060101080002","06010108",2,"Municipales (matricula, impuesto, basura)",2950,0,0,0), ("060101080003","06010108",3,"Medicinas",0,0,0,0), ("060101080004","06010108",4,"Obsequios y regalos",0,0,200,0), ("060101080005","06010108",5,"Alimentos y bebidas",0,0,0,0), ("060101080006","06010108",6,"Uniformes al personal",0,0,0,0), ("060101080007","06010108",7,"Entrada a estacionamientos",0,0,0,0), ("060101080008","06010108",8,"Seguros",0,0,0,0), ("060101080009","06010108",9,"Aseo y limpieza",0,0,0,0), ("060101080010","06010108",10,"Otros servicios contratados",0,0,0,0), ("060101080011","06010108",11,"Licencias de software",0,0,198.98,0), ("060101080012","06010108",12,"Marcas y otros distintivos",0,0,340,0), ("060101090001","06010109",1,"Honorarios profesionales",5000,0,0,0), ("060101100001","06010110",1,"Inss patronal",0,0,0,0), ("060102010001","06010201",1,"Sueldos",0,0,0,0), ("060102010002","06010201",2,"Vacaciones",0,0,0,0), ("060102010003","06010201",3,"Aguinaldos",0,0,0,0), ("060102010004","06010201",4,"Indemnizacion",0,0,0,0), ("060102010005","06010201",5,"INSS patronal",0,0,0,0), ("060102010006","06010201",6,"INATEC",0,0,0,0), ("060102010007","06010201",7,"Capacitaciones y talleres",0,0,0,0), ("060102010008","06010201",8,"Gastos Medicos",0,0,0,0), ("060102010009","06010201",9,"Bonificaciones",0,0,0,0), ("060102020001","06010202",1,"Alimentacion",0,0,0,0), ("060102020002","06010202",2,"Hospedaje",0,0,0,0), ("060102020003","06010202",3,"Transporte",0,0,0,0), ("060102020004","06010202",4,"Viaticos general",0,0,0,0), ("060102030001","06010203",1,"Energia electrica",0,0,0,0), ("060102030002","06010203",2,"Agua potable",0,0,0,0), ("060102030003","06010203",3,"Telefono celular",0,0,0,0), ("060102030004","06010203",4,"Telefono fijo",0,0,0,0), ("060102030005","06010203",5,"Internet",0,0,0,0), ("060102030006","06010203",6,"Comunicacion y correo",0,0,0,0), ("060102030007","06010203",7,"Alquiler de local",0,0,0,0), ("060102030008","06010203",8,"Vigilancia y seguridad",0,0,0,0), ("060102030009","06010203",9,"Suscripciones e inscripciones",0,0,122.72,0), ("060102030010","06010203",10,"Propaganda y publicidad",0,0,0,0), ("060102040001","06010204",1,"Mto.y rep. edificio",0,0,0,0), ("060102040002","06010204",2,"Mto.y rep. mobiliario y equipo de oficina",0,0,0,0), ("060102040003","06010204",3,"Mto.y rep. mobiliario y equipo de computos",0,0,0,0), ("060102040004","06010204",4,"Mto.y rep. mobiliario y equipo de rodantes",0,0,0,0), ("060102040005","06010204",5,"Mto.y rep. maquinaria",0,0,0,0), ("060102050001","06010205",1,"Papeleria y utiles de oficina",0,0,0,0), ("060102050002","06010205",2,"Combustible y lubricantes",500,0,0,0), ("060102050003","06010205",3,"Encolochado, fotocopia impresiones",0,0,0,0), ("060102050004","06010205",4,"Productos quimicos",0,0,0,0), ("060102060001","06010206",1,"Dep. edifcios",0,0,0,0), ("060102060002","06010206",2,"Dep. mobiliarios y equipos de oficina",0,0,0,0), ("060102060003","06010206",3,"Dep. equipos de computo",0,0,0,0), ("060102060004","06010206",4,"Dep. equipo rodante",0,0,0,0), ("060102060005","06010206",5,"Dep. maquinaria",0,0,0,0), ("060102070001","06010207",1,"Gastos de representacion",0,0,2500,0), ("060102070002","06010207",2,"Municipales (matricula, impuesto, basura)",0,0,0,0), ("060102070003","06010207",3,"Medicinas",0,0,0,0), ("060102070004","06010207",4,"Obsequios y regalos",0,0,0,0), ("060102070005","06010207",5,"Alimentos y bebidas",0,0,0,0), ("060102070006","06010207",6,"Uniformes al personal",183,0,0,0), ("060102070007","06010207",7,"Entrada a estacionamientos",0,0,0,0), ("060102070008","06010207",8,"Seguros",0,0,0,0), ("060102070009","06010207",9,"Aseo y limpieza",0,0,0,0), ("060102080001","06010208",1,"Honorarios profesionales",0,0,0,0), ("060102090001","06010209",1,"INSS PATRONAL",0,0,0,0), ("060103010001","06010301",1,"Comisiones bancarias",15389.4,0,846.24,0), ("060103010002","06010301",2,"Intereses por prestamos",0,0,0,0), ("060103010003","06010301",3,"Intereses por sobregiros",0,0,0,0), ("060103010004","06010301",4,"Mantenimiento valor",408.45,0,0,0), ("060103010005","06010301",5,"Anualidad tarjetas",1959.2025,0,525,0), ("060103010006","06010301",6,"Intereses a tarjetas de credito",9129.23125600001,0,336.56,0), ("060103010007","06010301",7,"Seguros tarjetas de credito",3239.45,0,0,0), ("060104010001","06010401",1,"Perdida cambiaria",9746.139999999999,0,0,0), ("060104010002","06010401",2,"Otros egresos",0,0,0,0), ("070101010001","07010101",1,"Multas",129919.28,0,340.62,0);
+
+
+
